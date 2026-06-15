@@ -50,41 +50,72 @@ const tempWatchedData = [
 const average = (arr) =>
   arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
 const KEY = 'fb582b3f';
-const query = '';
+const tempQuery = 'harry potter';
 
 export default function App() {
+  const [query, setQuery] = useState('');
   const [movies, setMovies] = useState([]);
   const [watched, setWatched] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   // console.log(`https://www.omdbapi.com/?apikey=${KEY}&s=interstellar`);
-  useEffect(function () {
-    async function fetchMovies() {
-      try {
-        setIsLoading(true);
-        const res = await fetch(
-          `https://www.omdbapi.com/?apikey=${KEY}&s=${query}`,
-        );
-        if (!res.ok)
-          throw new Error('Something went wrong with fetching movies');
-        const data = await res.json();
-        if (data.Response === 'False') throw new Error('Movie not found');
-        setMovies(data.Search);
-        console.log(data);
-      } catch (err) {
-        console.error(err.message);
-        setError(err.message);
-      } finally {
-        setIsLoading(false);
+
+  // 🚩The experiments with the order of logging depending on the dependency array and a special case:
+
+  // useEffect(function () {
+  //   console.log('After initial render');
+  // }, []);
+
+  // useEffect(function () {
+  //   console.log('After every render');
+  // });
+
+  // useEffect(
+  //   function () {
+  //     console.log('D');
+  //   },
+  //   [query],
+  // );
+
+  // console.log('During render');
+
+  useEffect(
+    function () {
+      async function fetchMovies() {
+        try {
+          setIsLoading(true);
+          setError('');
+          const res = await fetch(
+            `https://www.omdbapi.com/?apikey=${KEY}&s=${query}`,
+          );
+          if (!res.ok)
+            throw new Error('Something went wrong with fetching movies');
+          const data = await res.json();
+          if (data.Response === 'False') throw new Error('Movie not found');
+          setMovies(data.Search);
+          // console.log(data);
+        } catch (err) {
+          console.error(err.message);
+          setError(err.message);
+        } finally {
+          setIsLoading(false);
+        }
       }
-    }
-    fetchMovies();
-  }, []);
+
+      if (query.length < 3) {
+        setMovies([]);
+        setError('');
+        return;
+      }
+      fetchMovies();
+    },
+    [query],
+  );
 
   return (
     <>
       <NavBar>
-        <Search />
+        <Search query={query} setQuery={setQuery} />
         <NumResults movies={movies} />
       </NavBar>
       <Main>
@@ -133,9 +164,7 @@ function Logo() {
   );
 }
 
-function Search() {
-  const [query, setQuery] = useState('');
-
+function Search({ query, setQuery }) {
   return (
     <input
       className='search'
