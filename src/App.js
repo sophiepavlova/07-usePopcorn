@@ -51,7 +51,7 @@ const tempWatchedData = [
 const average = (arr) =>
   arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
 const KEY = 'fb582b3f';
-const tempQuery = 'harry potter';
+// const tempQuery = 'harry potter';
 
 export default function App() {
   const [query, setQuery] = useState('');
@@ -87,6 +87,10 @@ export default function App() {
 
   function handleCloseMovie() {
     setSelectedId(null);
+  }
+
+  function handleAddWatched(movie) {
+    setWatched((watched) => [...watched, movie]);
   }
 
   useEffect(
@@ -142,6 +146,8 @@ export default function App() {
             <MovieDetails
               selectedId={selectedId}
               onCloseMovie={handleCloseMovie}
+              onAddWatched={handleAddWatched}
+              watched={watched}
             />
           ) : (
             <>
@@ -269,9 +275,11 @@ function Movie({ movie, onSelectMovie }) {
   );
 }
 
-function MovieDetails({ selectedId, onCloseMovie }) {
+function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
   const [isLoading, setIsLoading] = useState(false);
   const [movie, setMovie] = useState({});
+  const [userRating, setUserRating] = useState('');
+
   const {
     Title: title,
     Year: year,
@@ -284,7 +292,27 @@ function MovieDetails({ selectedId, onCloseMovie }) {
     Director: director,
     Genre: genre,
   } = movie;
-  console.log(title, year);
+  // console.log(title, year);
+
+  const movieExists = watched.some((mov) => mov.imdbId === selectedId);
+
+  console.log(watched);
+  function handleAdd() {
+    console.log(movieExists);
+    const newWatchedMovie = {
+      imdbId: selectedId,
+      title,
+      year,
+      poster,
+      runtime: Number(runtime.split(' ').at(0)),
+      imdbRating: Number(imdbRating),
+      userRating,
+    };
+    if (!movieExists) onAddWatched(newWatchedMovie);
+    else console.log('Movie ks already in the list!');
+    onCloseMovie();
+  }
+  // const [curMovieRate, setCurMovieRate] = '';
   useEffect(
     function () {
       async function getMovieDetails() {
@@ -296,12 +324,16 @@ function MovieDetails({ selectedId, onCloseMovie }) {
         // console.log(data);
         setMovie(data);
         setIsLoading(false);
+        // const curMovie = watched.find((mov) => mov.indbId === selectedId);
+        // if (curMovie.userRating) setCurMovieRate(curMovie.userRating);
+        // console.log(curMovie);
       }
 
       getMovieDetails();
     },
     [selectedId],
   );
+  // console.log(userRating);
   return (
     <div className='details'>
       {isLoading ? (
@@ -326,7 +358,26 @@ function MovieDetails({ selectedId, onCloseMovie }) {
             </div>
           </header>
           <section>
-            <StarRating maxRating={10} size={24} />
+            {!movieExists && (
+              <StarRating
+                maxRating={10}
+                size={24}
+                onSetMovieRating={setUserRating}
+              />
+            )}
+            {movieExists && (
+              <StarRating
+                maxRating={10}
+                size={24}
+                defaultRating={5}
+                // defaultRating={watched.selectedId.userRating}
+              />
+            )}
+            {userRating > 0 && !movieExists && (
+              <button className='btn-add' onClick={handleAdd}>
+                + Add to list
+              </button>
+            )}
             <p>
               <em>{plot}</em>
             </p>
@@ -381,8 +432,8 @@ function WatchedMoviesList({ watched }) {
 function WatchedMovie({ movie }) {
   return (
     <li>
-      <img src={movie.Poster} alt={`${movie.Title} poster`} />
-      <h3>{movie.Title}</h3>
+      <img src={movie.poster} alt={`${movie.title} poster`} />
+      <h3>{movie.title}</h3>
       <div>
         <p>
           <span>⭐️</span>
