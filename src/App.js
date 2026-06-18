@@ -87,7 +87,6 @@ export default function App() {
 
   function handleCloseMovie() {
     setSelectedId(null);
-    // document.title = 'usePopcorn';
   }
 
   function handleAddWatched(movie) {
@@ -114,10 +113,10 @@ export default function App() {
           const data = await res.json();
           if (data.Response === 'False') throw new Error('Movie not found');
           setMovies(data.Search);
-          console.log(data.Search);
+          // console.log(data.Search);
           setError('');
         } catch (err) {
-          console.error(err.message);
+          // console.error(err.message);
           if (err.name !== 'AbortError') setError(err.message);
         } finally {
           setIsLoading(false);
@@ -129,6 +128,7 @@ export default function App() {
         setError('');
         return;
       }
+      handleCloseMovie();
       fetchMovies();
       return function () {
         controller.abort();
@@ -145,7 +145,6 @@ export default function App() {
       </NavBar>
       <Main>
         <Box>
-          {/* {isLoading ? <Loader /> : <MovieList movies={movies} />} */}
           {isLoading && <Loader />}
           {!isLoading && !error && (
             <MovieList movies={movies} onSelectMovie={handleSelectMovie} />
@@ -312,9 +311,9 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
     Genre: genre,
   } = movie;
   // console.log(title, year);
-  console.log(movie.Title);
+  // console.log(movie.Title);
 
-  console.log(watched);
+  // console.log(watched);
   function handleAdd() {
     const newWatchedMovie = {
       imdbId: selectedId,
@@ -329,6 +328,20 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
     onAddWatched(newWatchedMovie);
     onCloseMovie();
   }
+
+  useEffect(
+    function () {
+      function callback(e) {
+        if (e.code === 'Escape') onCloseMovie();
+        // console.log('Closed');
+      }
+      document.addEventListener('keydown', callback);
+      return function () {
+        document.removeEventListener('keydown', callback);
+      };
+    },
+    [onCloseMovie],
+  );
 
   useEffect(
     function () {
@@ -355,7 +368,7 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
       // 🚩A clean-up function for the effect
       return function () {
         document.title = 'usePopcorn';
-        console.log(`Clenup after the movie ${title}`);
+        // console.log(`Clenup after the movie ${title}`);
       };
     },
     [title],
@@ -453,7 +466,7 @@ function WatchedMoviesList({ watched, onDeleteWatched }) {
       {watched.map((movie) => (
         <WatchedMovie
           movie={movie}
-          key={movie.imdbID}
+          key={movie.imdbId}
           onDeleteWatched={onDeleteWatched}
         />
       ))}
