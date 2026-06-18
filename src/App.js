@@ -51,7 +51,7 @@ const tempWatchedData = [
 const average = (arr) =>
   arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
 const KEY = 'fb582b3f';
-// const tempQuery = 'harry potter';
+const tempQuery = 'harry potter';
 
 export default function App() {
   const [query, setQuery] = useState('');
@@ -87,6 +87,7 @@ export default function App() {
 
   function handleCloseMovie() {
     setSelectedId(null);
+    // document.title = 'usePopcorn';
   }
 
   function handleAddWatched(movie) {
@@ -99,12 +100,14 @@ export default function App() {
 
   useEffect(
     function () {
+      const controller = new AbortController();
       async function fetchMovies() {
         try {
           setIsLoading(true);
           setError('');
           const res = await fetch(
             `https://www.omdbapi.com/?apikey=${KEY}&s=${query}`,
+            { signal: controller.signal },
           );
           if (!res.ok)
             throw new Error('Something went wrong with fetching movies');
@@ -112,9 +115,10 @@ export default function App() {
           if (data.Response === 'False') throw new Error('Movie not found');
           setMovies(data.Search);
           console.log(data.Search);
+          setError('');
         } catch (err) {
           console.error(err.message);
-          setError(err.message);
+          if (err.name !== 'AbortError') setError(err.message);
         } finally {
           setIsLoading(false);
         }
@@ -126,6 +130,9 @@ export default function App() {
         return;
       }
       fetchMovies();
+      return function () {
+        controller.abort();
+      };
     },
     [query],
   );
@@ -305,6 +312,7 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
     Genre: genre,
   } = movie;
   // console.log(title, year);
+  console.log(movie.Title);
 
   console.log(watched);
   function handleAdd() {
@@ -340,6 +348,19 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
     [selectedId],
   );
   // console.log(userRating);
+  useEffect(
+    function () {
+      if (!title) return;
+      document.title = `Movie | ${title}`;
+      // 🚩A clean-up function for the effect
+      return function () {
+        document.title = 'usePopcorn';
+        console.log(`Clenup after the movie ${title}`);
+      };
+    },
+    [title],
+  );
+
   return (
     <div className='details'>
       {isLoading ? (
