@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import StarRating from './StarRating.js';
 import { useMovies } from './useMovies.js';
 import { useLocalStorageState } from './useLocalStorageState.js';
+import { useKey } from './useKey.js';
 
 // const tempQuery = 'harry potter';
 const KEY = 'fb582b3f';
@@ -104,20 +105,11 @@ function Logo() {
 function Search({ query, setQuery }) {
   const inputEl = useRef(null);
 
-  useEffect(
-    function () {
-      // console.log(inputEl.current);
-      function callback(e) {
-        if (document.activeElement === inputEl.current) return;
-        if (e.code === 'Enter') {
-          inputEl.current.focus();
-        }
-      }
-      document.addEventListener('keydown', callback);
-      return () => document.removeEventListener('keydown', callback);
-    },
-    [setQuery],
-  );
+  useKey('Enter', function () {
+    if (document.activeElement === inputEl.current) return;
+    inputEl.current.focus();
+    setQuery('');
+  });
 
   return (
     <input
@@ -195,7 +187,7 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
     },
     [userRating],
   );
-  // console.log(isWatched);
+
   const watchedUserRating = watched.find(
     (move) => move.imdbId === selectedId,
   )?.userRating;
@@ -212,25 +204,6 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
     Director: director,
     Genre: genre,
   } = movie;
-  // console.log(title, year);
-  // console.log(movie.Title);
-
-  // console.log(watched);
-
-  // 🛑Wrong way to do it:
-  // if (imdbRating > 8) {
-  //   const [isTop, setIsTop] = useState(true);
-  // }
-  // const [isTop, setIsTop] = useState(imdbRating > 8);
-  // console.log(isTop);
-  // useEffect(
-  //   function () {
-  //     setIsTop(imdbRating > 8);
-  //   },
-  //   [imdbRating],
-  // );
-
-  // if (imdbRating > 7) return <p>Great movie!</p>;
 
   function handleAdd() {
     const newWatchedMovie = {
@@ -246,23 +219,8 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
 
     onAddWatched(newWatchedMovie);
     onCloseMovie();
-    // setAvgRating(Number(imdbRating));
-    // setAvgRating((cur) => (cur + userRating) / 2);
   }
-
-  useEffect(
-    function () {
-      function callback(e) {
-        if (e.code === 'Escape') onCloseMovie();
-        // console.log('Closed');
-      }
-      document.addEventListener('keydown', callback);
-      return function () {
-        document.removeEventListener('keydown', callback);
-      };
-    },
-    [onCloseMovie],
-  );
+  useKey('Escape', onCloseMovie);
 
   useEffect(
     function () {
@@ -281,7 +239,7 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
     },
     [selectedId],
   );
-  // console.log(userRating);
+
   useEffect(
     function () {
       if (!title) return;
@@ -289,7 +247,6 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
       // 🚩A clean-up function for the effect
       return function () {
         document.title = 'usePopcorn';
-        // console.log(`Clenup after the movie ${title}`);
       };
     },
     [title],
